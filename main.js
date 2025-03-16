@@ -1,18 +1,12 @@
-// 1. Pedir el Acces Token
-// 2. Pedir la PlayList
-// 3. Descargar la PlayList
-
 import axios from "axios";
 import qs from "qs";
 import readline from "readline";
+import "dotenv/config";
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
-
-import "dotenv/config";
-import fs from "fs/promises";
-import { Console } from "console";
 
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -38,16 +32,7 @@ async function getAccessToken() {
 }
 var accesToken = await getAccessToken();
 
-function askQuestion(query) {
-  return new Promise((resolve) => {
-    rl.question(query, (answer) => {
-      resolve(answer);
-    });
-  });
-}
-
 rl.question("Por favor, ingresa el ID de la playlist: ", (playlistId) => {
-  //getPlaylist(playlistId, accesToken);
   main(playlistId, accesToken);
   rl.close();
 });
