@@ -56,13 +56,15 @@ node main.js
 
 ## 📌 ¿Cómo funciona?
 
-1️⃣ **Obtiene el Access Token de Spotify** para poder consultar playlists.
-2️⃣ **Solicita el ID de una Playlist de Spotify**.
-3️⃣ **Obtiene la información de la Playlist y sus canciones**.
+1️⃣ **Obtiene el Access Token de Spotify** para poder consultar playlists o canciones guardadas.
+2️⃣ **Solicita el ID de una Playlist de Spotify o elige descargar canciones guardadas (Liked Songs)**.
+3️⃣ **Obtiene la información de la Playlist o las canciones guardadas**.
 4️⃣ **Busca y descarga cada canción en formato MP3** usando `yt-dlp`.
-5️⃣ **Guarda las canciones en la carpeta de la playlist**.
+5️⃣ **Guarda las canciones en la carpeta correspondiente**.
 
-### **Ejemplo de uso**
+### **Opciones disponibles:**
+
+🔹 **Opción 1: Descargar una Playlist de Spotify**
 Cuando ejecutas `node main.js`, el programa te pedirá el ID de la playlist:
 
 ```bash
@@ -80,6 +82,32 @@ Luego, el programa empezará a descargar las canciones:
 ✅ Éxitos: 50
 ❌ Errores: 0
 ⏳ Tiempo total de descarga: 3 minutos 25 segundos
+```
+
+🔹 **Opción 2: Descargar canciones guardadas en "Liked Songs"**
+Si eliges descargar las canciones que has marcado como favoritas en Spotify, el script abrirá una ventana en el navegador para autenticarte en Spotify.
+
+1. El usuario se autenticará en Spotify y otorgará permisos.
+2. Una vez iniciadio sesion, se te reigirá a localhost, podrás ver que la URL será, localhost/code=PERSONALTOKEN, solo tienes que copiar el PERSONALTOKEN y pegarlo en la terminal, luego se irán descargando las cancioes
+3. El script obtendrá todas las canciones guardadas en "Liked Songs".
+4. Las canciones se descargarán y se guardarán en la carpeta `Liked Songs`.
+
+```bash
+📥 ¿Qué quieres hacer?
+1️⃣ Descargar una Playlist de Spotify
+2️⃣ Descargar tus canciones guardadas (Liked Songs)
+3️⃣ Salir
+
+Selecciona una opción (1/2/3): 2
+🔹 Obteniendo tus canciones guardadas...
+🎵 Descargando playlist: Liked Songs
+🔄 Iniciando descarga: Song 1 - Artist 1
+✅ Descargada (1/120): Song 1 - Artist 1
+...
+🎉 Descargas finalizadas
+✅ Éxitos: 120
+❌ Errores: 0
+⏳ Tiempo total de descarga: 4 minutos 30 segundos
 ```
 
 ---
@@ -101,6 +129,7 @@ Si deseas cambiar la configuración de la API de descarga o los parámetros de `
 | `No se encontraron videos.` | Puede ser que YouTube no tenga la canción exacta. Intenta buscar manualmente. |
 | `yt-dlp command not found` | Asegúrate de haber instalado `yt-dlp` correctamente con `pip install yt-dlp`. |
 | `ffmpeg not found` | Añade `ffmpeg` al `PATH` o define su ruta en `FFMPEG_PATH` en `api.py`. |
+| `Error: invalid_grant` | Verifica que el código de autenticación copiado sea correcto y que no haya expirado. |
 
 ---
 

@@ -2,6 +2,9 @@ import axios from "axios";
 import qs from "qs";
 import readline from "readline";
 import "dotenv/config";
+import crypto from "crypto";
+import open from "open";
+import readlineSync from "readline-sync";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -10,6 +13,7 @@ const rl = readline.createInterface({
 
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
+const redirect_uri = "http://localhost";
 
 // Pediremos un Acces Token a Spotify
 async function getAccessToken() {
@@ -32,11 +36,122 @@ async function getAccessToken() {
 }
 var accesToken = await getAccessToken();
 
-rl.question("Por favor, ingresa el ID de la playlist: ", (playlistId) => {
-  main(playlistId, accesToken);
-  rl.close();
-});
+// Menu
+function showMenu() {
+  console.log("\n📥 ¿Qué quieres hacer?");
+  console.log("1️⃣ Descargar una Playlist de Spotify");
+  console.log("2️⃣ Descargar tus canciones guardadas (Liked Songs)");
+  console.log("3️⃣ Salir\n");
 
+  rl.question("Selecciona una opción (1/2/3): ", async (option) => {
+    
+    switch (option) {
+      case "1":
+        rl.question("🔹 Ingresa el ID de la Playlist: ", async (playlistId) => {
+          const accessToken = await getAccessToken();
+          await main(playlistId, accessToken);
+          rl.close();
+        });
+        break;
+      case "2":
+        getUserAccessToken()
+        rl.close();
+        break;
+      case "3":
+        console.log("📥 Salir");
+        break;
+      default:
+        console.log("❌ Opción inválida. Inténtalo de nuevo.");
+        showMenu();
+        return;
+    }
+  });
+}
+
+showMenu();
+
+let codeVerifier = null;
+
+function generateCodeVerifier() {
+  return crypto.randomBytes(32).toString("base64url");
+}
+
+function generateCodeChallenge(codeVerifier) {
+  return crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+}
+
+// Gets the user's access token
+async function getUserAccessToken() {
+  codeVerifier = generateCodeVerifier();
+  const codeChallenge = generateCodeChallenge(codeVerifier);
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=${client_id}&response_type=code&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=user-library-read&code_challenge_method=S256&code_challenge=${codeChallenge}`;
+
+  console.log("\n🔗 Abriendo el navegador para autenticarte en Spotify...");
+  console.log(`Si no se abre automáticamente, copia y pega esta URL en tu navegador:\n${authUrl}`);
+
+  await open(authUrl);
+
+  const authCode = readlineSync.question("\n📋 Pega aquí el código de autorización de la URL: ");
+
+  try {
+    const tokenUrl = "https://accounts.spotify.com/api/token";
+    const response = await axios.post(
+      tokenUrl,
+      new URLSearchParams({
+        client_id,
+        grant_type: "authorization_code",
+        code: authCode,
+        redirect_uri,
+        code_verifier: codeVerifier,
+      }),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    console.log("\n✅ Autenticación exitosa. Token obtenido.");
+    getLikedSongs(response.data.access_token);
+    return response.data.access_token;
+  } catch (error) {
+    console.error("\n❌ Error al obtener el token:", error.response?.data || error.message);
+    process.exit(1);
+  }
+}
+
+// Gets the user's Liked Songs with the user's access token
+async function getLikedSongs(accessToken) {
+  let allTracks = [];
+  let limit = 50;
+  let offset = 0;
+  let hasMore = true;
+
+  console.log("\n🎵 Obteniendo canciones guardadas en Liked Songs...");
+
+  while (hasMore) {
+    try {
+      const response = await axios.get("https://api.spotify.com/v1/me/tracks", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { limit, offset },
+      });
+
+      const tracks = response.data.items;
+      allTracks = allTracks.concat(tracks);
+
+      if (tracks.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
+    } catch (error) {
+      console.error("❌ Error obteniendo las Liked Songs:", error.response?.data || error.message);
+      return [];
+    }
+  }
+
+  downloadSongs("Liked Songs", allTracks);
+
+  return allTracks;
+}
+
+// Main
 async function main(playlistId, access_token) {
   try {
     var tracks = await getPlaylistTracks(playlistId, access_token);
@@ -53,6 +168,7 @@ async function main(playlistId, access_token) {
   }
 }
 
+// Gets the playlist's tracks
 async function getPlaylistTracks(playlistId, accessToken) {
   let allTracks = [];
   let limit = 100;
@@ -88,6 +204,7 @@ async function getPlaylistTracks(playlistId, accessToken) {
   return allTracks;
 }
 
+// Gets the playlist info
 async function getPlayListInfo(playlistId, accessToken) {
   const url = `https://api.spotify.com/v1/playlists/${playlistId}`;
   try {
@@ -106,7 +223,7 @@ async function getPlayListInfo(playlistId, accessToken) {
   }
 }
 
-
+// Download the songs
 async function downloadSongs(playListName, tracks) {
   var startedAt = Date.now();
   const apiDownloader = "http://localhost:8000/download/?query=";
