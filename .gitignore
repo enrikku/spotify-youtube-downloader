@@ -1,0 +1,36 @@
+# Git Ignore para Node.js y FastAPI (Python)
+
+# Ignorar dependencias y entornos virtuales
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# Ignorar carpeta de descargas
+/downloads/
+
+# Archivos de configuración y logs
+.DS_Store
+Thumbs.db
+logs/
+*.log
+
+# FastAPI/uvicorn archivos temporales
+*.db
+instance/
+*.sqlite
+
+# Otros archivos innecesarios
+.vscode/
+.idea/
+*.swp
+*.swo
